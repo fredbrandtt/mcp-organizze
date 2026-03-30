@@ -134,7 +134,9 @@ components:
           type: string
           example: "Itaú CC"
         type:
-          $ref: '#/components/schemas/AccountType'
+          type: string
+          enum: [checking, savings, other]
+          description: "Tipo da conta bancária"
         description:
           type: string
           example: "Minha conta corrente"
@@ -267,7 +269,9 @@ components:
         name:
           type: string
         card_network:
-          $ref: '#/components/schemas/CreditCardNetwork'
+          type: string
+          enum: [visa, mastercard, amex, elo, hipercard, others, default]
+          description: Bandeira do cartão
         due_day:
           type: integer
           description: Dia de vencimento
@@ -275,7 +279,9 @@ components:
           type: integer
           description: Dia de fechamento
         limit_cents:
-          $ref: '#/components/schemas/PriceCents'
+          type: integer
+          description: "Limite do cartão em centavos"
+          example: 500000
     
     CreditCardInvoice:
       type: object
@@ -359,9 +365,6 @@ components:
           type: boolean
         account_id:
           type: integer
-        account_type:
-            type: string
-            enum: ["Account", "CreditCard"]
         category_id:
           type: integer
         contact_id:
@@ -427,15 +430,19 @@ components:
         description:
           type: string
         date:
-          $ref: '#/components/schemas/DateString'
+          type: string
+          description: "Data da movimentação no formato AAAA-MM-DD"
+          example: "2015-09-16"
         amount_cents:
-           $ref: '#/components/schemas/PriceCents'
+          type: integer
+          description: "Valor em centavos (negativo = despesa, positivo = receita)"
+          example: -150000
         paid:
-            type: boolean
+          type: boolean
         account_id:
-            type: integer
+          type: integer
         category_id:
-            type: integer
+          type: integer
         notes:
           type: string
         tags:
@@ -443,9 +450,9 @@ components:
           items:
             $ref: '#/components/schemas/Tag'
         recurrence_attributes:
-            $ref: '#/components/schemas/RecurrenceAttributes'
+          $ref: '#/components/schemas/RecurrenceAttributes'
         installments_attributes:
-            $ref: '#/components/schemas/InstallmentsAttributes'
+          $ref: '#/components/schemas/InstallmentsAttributes'
             
     # --- Transfers ---
     Transfer:
@@ -560,21 +567,25 @@ components:
         properties:
             credit_account_id:
                 type: integer
-                description: ID da conta de destino (entrada)
+                description: ID da conta de destino (entrada). Cartões de crédito NÃO são aceitos.
             debit_account_id:
                 type: integer
-                description: ID da conta de origem (saída)
+                description: ID da conta de origem (saída). Cartões de crédito NÃO são aceitos.
             amount_cents:
-                $ref: '#/components/schemas/PriceCents'
+                type: integer
+                description: "Valor em centavos"
+                example: 10000
             date:
-                $ref: '#/components/schemas/DateString'
+                type: string
+                description: "Data da transferência no formato AAAA-MM-DD"
+                example: "2015-09-01"
             paid:
                 type: boolean
             tags:
                  type: array
                  items:
                     $ref: '#/components/schemas/Tag'
-            description: 
+            description:
                  type: string
             notes:
                  type: string
@@ -901,13 +912,26 @@ paths:
         content:
           application/json:
             schema:
-              allOf:
-                - $ref: '#/components/schemas/CreditCardInput'
-                - type: object
-                  properties:
-                     update_invoices_since:
-                        type: string
-                        format: date
+              type: object
+              properties:
+                name:
+                  type: string
+                card_network:
+                  type: string
+                  enum: [visa, mastercard, amex, elo, hipercard, others, default]
+                due_day:
+                  type: integer
+                  description: Dia de vencimento
+                closing_day:
+                  type: integer
+                  description: Dia de fechamento
+                limit_cents:
+                  type: integer
+                  description: "Limite do cartão em centavos"
+                update_invoices_since:
+                  type: string
+                  description: "Data a partir da qual recalcular faturas (AAAA-MM-DD)"
+                  example: "2015-07-01"
       responses:
         '200':
           description: Cartão atualizado
@@ -1097,16 +1121,39 @@ paths:
         content:
           application/json:
             schema:
-              allOf:
-                - $ref: '#/components/schemas/TransactionInput'
-                - type: object
-                  properties:
-                    update_future:
-                      type: boolean
-                      description: Atualizar esta e as próximas ocorrências (se recorrente)
-                    update_all:
-                      type: boolean
-                      description: Atualizar todas as ocorrências (se recorrente)
+              type: object
+              properties:
+                description:
+                  type: string
+                date:
+                  type: string
+                  description: "Data da movimentação no formato AAAA-MM-DD"
+                  example: "2015-09-16"
+                amount_cents:
+                  type: integer
+                  description: "Valor em centavos (negativo = despesa, positivo = receita)"
+                paid:
+                  type: boolean
+                account_id:
+                  type: integer
+                category_id:
+                  type: integer
+                notes:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+                recurrence_attributes:
+                  $ref: '#/components/schemas/RecurrenceAttributes'
+                installments_attributes:
+                  $ref: '#/components/schemas/InstallmentsAttributes'
+                update_future:
+                  type: boolean
+                  description: Atualizar esta e as próximas ocorrências (se recorrente)
+                update_all:
+                  type: boolean
+                  description: Atualizar todas as ocorrências (se recorrente)
       responses:
         '200':
           description: Movimentação atualizada
